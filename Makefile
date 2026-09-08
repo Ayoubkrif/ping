@@ -9,32 +9,33 @@
 #                                                                              #
 # **************************************************************************** #
 
-# directories
+############################   CONFIGURATION ZONE   #############################
+# Directorie in which src will be found
 SRC_DIR   = sources
+
+# Directorie in which obj will be built
 OBJ_DIR   = build
 
-# Sources files listing
+# Source files listing
 SRC_FILES = \
 			main.c \
+			check_flags.c \
 
-
-SOURCES = $(addprefix $(SRC_DIR)/,$(SRC_FILES))
-
-# include directories
+# Include directories listing
 INC_DIR = \
 	includes \
 
-##################################################################################
-#compilation
 NAME		= ft_ping
 CC			= cc
+PFLAGS		=
 CFLAGS 		= -Wall -Wextra -Werror -MMD -MP -g3
-PREPROC		=
+LFLAGS		= -lcap
+##################################################################################
+
+SOURCES = $(addprefix $(SRC_DIR)/,$(SRC_FILES))
 INCLUDES	= $(addprefix -I, $(INC_DIR))
 
-# Objets
 OBJS = $(SOURCES:%.c=$(OBJ_DIR)/%.o)
-
 DEPS = $(OBJS:.o=.d)
 
 all: $(NAME)
@@ -43,6 +44,7 @@ all: $(NAME)
 # LINK
 $(NAME): $(OBJS)
 	$(CC) $(OBJS) \
+		$(LFLAGS) \
 		-o $@
 
 #compilation
