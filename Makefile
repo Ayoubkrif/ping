@@ -20,6 +20,7 @@ OBJ_DIR   = build
 SRC_FILES = \
 			main.c \
 			check_flags.c \
+			raw_sock.c \
 
 # Include directories listing
 INC_DIR = \
