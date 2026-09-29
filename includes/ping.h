@@ -5,6 +5,9 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef u_int8_t int8;
 typedef u_int16_t int16;
@@ -14,7 +17,7 @@ typedef u_int64_t int64;
 #define $i (int)
 
 void	check_flags(void);
-void	DNS_resolve (int sock);
+int		DNS_resolve (int sock, char *hostname);
 int		open_raw_socket(void);
 void	IMCP_send_echo_request(int sock, char *dest);
 

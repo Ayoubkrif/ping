@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "ping.h"
-#include <assert.h>
-#include <string.h>
 
 int	main(int argc, char **argv)
 {
@@ -16,7 +11,11 @@ int	main(int argc, char **argv)
 // DONE: ouvrir une socket | socket
 	int sock = open_raw_socket();
 // TODO: resoudre le DNS | gethostbyname, getaddrinfo
-	DNS_resolve(sock);
+	if (DNS_resolve(sock, argv[1]) == -1) {
+	   fprintf(stderr, "cannot solve \"%s\"\n", argv[1]);
+	   exit(EXIT_FAILURE);
+	}
+
 // TODO: commencer a envoyer selon ICMP | sendto, recvfrom
 // 		Quel payload ?
 // 		Comment appeler sendto ? rcvfrom ?
