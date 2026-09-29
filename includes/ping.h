@@ -1,5 +1,7 @@
 #pragma once
-#include<sys/types.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip.h>
 #include <unistd.h>
@@ -12,6 +14,7 @@ typedef u_int64_t int64;
 #define $i (int)
 
 void	check_flags(void);
+void	DNS_resolve (int sock);
 int		open_raw_socket(void);
 void	IMCP_send_echo_request(int sock, char *dest);
 

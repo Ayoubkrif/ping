@@ -21,6 +21,7 @@ SRC_FILES = \
 			main.c \
 			check_flags.c \
 			raw_sock.c \
+			DNS_resolve.c \
 
 # Include directories listing
 INC_DIR = \
