@@ -21,7 +21,8 @@ SRC_FILES = \
 			main.c \
 			check_flags.c \
 			raw_sock.c \
-			DNS_resolve.c \
+			DNS/resolve.c \
+			ICMP/send_echo_request.c \
 
 # Include directories listing
 INC_DIR = \
