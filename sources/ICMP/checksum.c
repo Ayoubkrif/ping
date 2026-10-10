@@ -1,7 +1,7 @@
 #include "ping.h"
 
-static int16
-checksum
+int16
+ICMP_checksum
 (void *data, int len) {
     int32 sum = 0;
     int16 *ptr = data;
