@@ -22,6 +22,8 @@ SRC_FILES = \
 			check_flags.c \
 			raw_sock.c \
 			DNS/resolve.c \
+			ICMP/mkpkt.c \
+			ICMP/checksum.c \
 			ICMP/send_echo_request.c \
 
 # Include directories listing

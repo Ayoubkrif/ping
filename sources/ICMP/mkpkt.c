@@ -1,13 +1,13 @@
 #include "ping.h"
 
 IcmpPacket*
-MakeICMP
+ICMP_mkpkt
 (int8 type, int8 code, int8 *data, int16 size) {
 	if (!data || !size)
 		return (NULL);
 	IcmpPacket	*p;
 	int			n;
-	n = sizeof(IcmpPacket) + size;
+	n = sizeof(struct icmphdr) + size;
 	p = (IcmpPacket*)malloc($i n);
 	assert(p);
 	bzero(p, n);
@@ -17,4 +17,3 @@ MakeICMP
 	p->header.checksum = ICMP_checksum(p, n);
 	return (p);
 }
-

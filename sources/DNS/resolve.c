@@ -3,7 +3,7 @@
 // TODO: resoudre le DNS | gethostbyname, getaddrinfo
 int
 DNS_resolve
-(char *hostname, struct in_addr *dest_ip) {
+(char *hostname, struct sockaddr_in *dest_addr) {
 	char *node = hostname;
 	char *service = NULL; // port
 	struct addrinfo *res = NULL;
@@ -22,8 +22,7 @@ DNS_resolve
 	 * the first one that match can be used 
 	 * */
 	// no need to check if (res == NULL), getaddrinfo would returned an error
-	//
-	*dest_ip = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	memcpy(dest_addr, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);           /* For leaks */
 	return (true);
 }
