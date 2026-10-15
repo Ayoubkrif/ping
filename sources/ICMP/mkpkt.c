@@ -7,10 +7,11 @@ ICMP_mkpkt
 		return (NULL);
 	IcmpPacket	*p;
 	int			n;
-	n = sizeof(struct icmphdr) + size;
+	n = sizeof(int16) + sizeof(struct icmphdr) + size;
 	p = (IcmpPacket*)malloc($i n);
 	assert(p);
 	bzero(p, n);
+	p->size = size;
 	p->header.type = type;
 	p->header.code = code;
 	memcpy(&p->data, data, size);

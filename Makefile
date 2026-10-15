@@ -25,6 +25,7 @@ SRC_FILES = \
 			ICMP/mkpkt.c \
 			ICMP/checksum.c \
 			ICMP/send_echo_request.c \
+			ICMP/print.c \
 
 # Include directories listing
 INC_DIR = \

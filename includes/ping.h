@@ -30,12 +30,14 @@ void	check_flags(void);
 int		open_raw_socket(void);
 int		DNS_resolve(char *hostname, struct sockaddr_in *dest_addr);
 
-int16	ICMP_checksum(void *data, int len);
-void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr);
-
 typedef struct s_icmp {
+	int16			size;
 	struct icmphdr	header;
 	int8			data[];
 } IcmpPacket;
+
+int16	ICMP_checksum(void *data, int len);
+void	ICMP_print(IcmpPacket *pkt);
+void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr);
 
 IcmpPacket	*ICMP_mkpkt(int8, int8, int8*, int16);

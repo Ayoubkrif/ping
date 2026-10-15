@@ -28,6 +28,7 @@ main
 // DONE: envoyer selon icmp
 	IMCP_send_echo_request(sock, &dest_addr);
 // TODO: recevoir le packet
+	// ICMP_recv_echo_reply(sock);
 // TODO: interpreter et afficher les resultats | printf
 	return (EXIT_SUCCESS);
 }
