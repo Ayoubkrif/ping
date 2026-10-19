@@ -31,13 +31,18 @@ int		open_raw_socket(void);
 int		DNS_resolve(char *hostname, struct sockaddr_in *dest_addr);
 
 typedef struct s_icmp {
-	int16			size;
-	struct icmphdr	header;
-	int8			data[];
+	struct icmphdr	hdr;
+	int8			pl[];
 } IcmpPacket;
 
-int16	ICMP_checksum(void *data, int len);
-void	ICMP_print(IcmpPacket *pkt);
+typedef struct datagram {
+	int16			sizeOfPl;
+	IcmpPacket		*pkt;
+} datagram;
+
+int16	ICMP_checksum(void *, int);
+void	ICMP_print(datagram *);
 void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr);
+void	ICMP_recv_echo_reply(int sock, struct sockaddr_in *dest_addr);
 
 IcmpPacket	*ICMP_mkpkt(int8, int8, int8*, int16);

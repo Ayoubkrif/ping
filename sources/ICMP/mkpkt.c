@@ -2,19 +2,18 @@
 
 IcmpPacket*
 ICMP_mkpkt
-(int8 type, int8 code, int8 *data, int16 size) {
-	if (!data || !size)
+(int8 type, int8 code, int8 *data, int16 sizeOfPl) {
+	if (!data || !sizeOfPl)
 		return (NULL);
-	IcmpPacket	*p;
-	int			n;
-	n = sizeof(int16) + sizeof(struct icmphdr) + size;
-	p = (IcmpPacket*)malloc($i n);
-	assert(p);
-	bzero(p, n);
-	p->size = size;
-	p->header.type = type;
-	p->header.code = code;
-	memcpy(&p->data, data, size);
-	p->header.checksum = ICMP_checksum(p, n);
-	return (p);
+	IcmpPacket	*pkt;
+	int			totalSize;
+	totalSize = sizeof(struct icmphdr) + sizeOfPl;
+	pkt = (IcmpPacket*)malloc($i totalSize);
+	assert(pkt);
+	bzero(pkt, totalSize);
+	pkt->hdr.type = type;
+	pkt->hdr.code = code;
+	memcpy(&pkt->pl, data, sizeOfPl);
+	pkt->hdr.checksum = ICMP_checksum(pkt, totalSize);
+	return (pkt);
 }

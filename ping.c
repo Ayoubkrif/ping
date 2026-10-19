@@ -1,0 +1,389 @@
+/*  Copyright (C) 2011-2026  P.D. Buchan (pdbuchan@gmail.com)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+// Send an IPv4 ICMP datagram via raw socket.
+// Stack fills out layer 2 (data link) information (MAC addresses) for us.
+// Values set for echo request datagram, includes some ICMP data.
+
+#define _GNU_SOURCE           // Sometimes required for GNU/Linux-specific interfaces. e.g., SO_BINDTODEVICE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>           // close()
+#include <string.h>           // memset(), memcpy()
+#include <stdint.h>           // uint8_t, uint16_t, uint32_t
+
+#include <netdb.h>            // struct addrinfo
+#include <sys/socket.h>       // socket()
+#include <netinet/in.h>       // IPPROTO_RAW, IPPROTO_IP, IPPROTO_ICMP, INET_ADDRSTRLEN
+#include <netinet/ip.h>       // struct ip, IP_MAXPACKET (which is 65535)
+#include <netinet/ip_icmp.h>  // struct icmp, ICMP_ECHO
+#include <arpa/inet.h>        // inet_pton(), inet_ntop()
+#include <net/if.h>           // IFNAMSIZ
+#include <time.h>             // time()
+
+#include <errno.h>            // errno
+
+// Define some constants.
+#define IP4_HDRLEN 20         // IPv4 header length
+#define ICMP_HDRLEN 8         // ICMP header length for echo request, excludes data
+#define HOSTNAME_LEN 255      // Maximum FQDN length including terminating null byte
+
+// Function prototypes
+uint16_t icmp4_checksum (uint8_t *, int);
+uint16_t checksum (uint8_t *, int);
+char *allocate_strmem (int);
+uint8_t *allocate_ustrmem (int);
+
+int
+main (void) {
+
+  int status, icmp_datalen, sd, ip_flags[4] = {0}, datagram_length;
+  ssize_t bytes;
+  const int on = 1;
+  char *interface, *target, *src_ip, *dst_ip;
+  struct ip iphdr;
+  struct icmp icmphdr;
+  uint8_t *datagram;
+  struct addrinfo hints, *res;
+  struct sockaddr_in dst, sin;
+
+  memset (&iphdr, 0, sizeof (iphdr));
+  memset (&icmphdr, 0, sizeof (icmphdr));
+
+  // Allocate memory for various arrays.
+  datagram = allocate_ustrmem (IP_MAXPACKET);
+  interface = allocate_strmem (IFNAMSIZ);
+  target = allocate_strmem (HOSTNAME_LEN);
+  src_ip = allocate_strmem (INET_ADDRSTRLEN);
+  dst_ip = allocate_strmem (INET_ADDRSTRLEN);
+
+  // Random number seed
+  srand ((unsigned) time (NULL));
+
+  // Interface to send datagram through.
+  snprintf (interface, IFNAMSIZ, "enp7s0");
+
+  // Source IPv4 address: You need to fill this out.
+  snprintf (src_ip, INET_ADDRSTRLEN, "192.168.0.9");
+
+  // Destination hostname or IPv4 address: You need to fill this out.
+  snprintf (target, HOSTNAME_LEN, "www.google.com");
+
+  // Fill out hints for getaddrinfo().
+  memset (&hints, 0, sizeof (hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = 0;  // Address resolution only; any socket type.
+  hints.ai_flags = hints.ai_flags | AI_CANONNAME;
+
+  // Resolve target using getaddrinfo().
+  if ((status = getaddrinfo (target, NULL, &hints, &res)) != 0) {
+    fprintf (stderr, "getaddrinfo() failed for target.\nError message: %s\n", gai_strerror (status));
+    exit (EXIT_FAILURE);
+  }
+  memset (&dst, 0, sizeof (dst));
+  memcpy (&dst, res->ai_addr, res->ai_addrlen);
+  if (inet_ntop (AF_INET, &dst.sin_addr, dst_ip, INET_ADDRSTRLEN) == NULL) {
+    status = errno;
+    fprintf (stderr, "inet_ntop() failed for target.\nError message: %s\n", strerror (status));
+    exit (EXIT_FAILURE);
+  }
+  freeaddrinfo (res);
+
+  // ICMP data
+  // Use "icmpdata" instead of "icmp_data" because <netinet/ip_icmp.h>
+  // defines icmp_data as a macro, which would conflict with a variable
+  // of the same name.
+  uint8_t icmpdata[] = {'T', 'e', 's', 't'};
+  icmp_datalen = sizeof (icmpdata);
+
+  // IPv4 header
+
+  // IPv4 header length (4 bits): Number of 32-bit words in header = 5
+  iphdr.ip_hl = IP4_HDRLEN / sizeof (uint32_t);
+
+  // Internet Protocol version (4 bits): IPv4
+  iphdr.ip_v = 4;
+
+  // Type of service (8 bits)
+  iphdr.ip_tos = 0;
+
+  // Total length of datagram (16 bits): IP header + ICMP header + ICMP data
+  iphdr.ip_len = htons (IP4_HDRLEN + ICMP_HDRLEN + icmp_datalen);
+
+  // IPv4 Identification field (16 bits)
+  iphdr.ip_id = htons ((uint16_t) (rand () & 0xffff));
+
+  // Flags, and Fragmentation offset (3, 13 bits): 0 since single datagram.
+
+  // Zero (1 bit)
+  ip_flags[0] = 0;
+
+  // Do not fragment flag (1 bit)
+  ip_flags[1] = 0;
+
+  // More fragments following flag (1 bit)
+  ip_flags[2] = 0;
+
+  // Fragmentation offset (13 bits)
+  ip_flags[3] = 0;
+
+  iphdr.ip_off = htons ((ip_flags[0] << 15)
+                      + (ip_flags[1] << 14)
+                      + (ip_flags[2] << 13)
+                      +  ip_flags[3]);
+
+  // Time-to-Live (8 bits): Default to maximum value.
+  iphdr.ip_ttl = 255;
+
+  // Transport layer protocol (8 bits): 1 for ICMP
+  iphdr.ip_p = IPPROTO_ICMP;
+
+  // Source IPv4 address (32 bits)
+  if ((status = inet_pton (AF_INET, src_ip, &(iphdr.ip_src))) != 1) {
+    if (status == 0) {
+      fprintf (stderr, "inet_pton() failed for source address.\nError message: Invalid address\n");
+    } else if (status < 0) {
+      fprintf (stderr, "inet_pton() failed for source address.\nError message: %s\n", strerror (errno));
+    }
+    exit (EXIT_FAILURE);
+  }
+
+  // Destination IPv4 address (32 bits)
+  if ((status = inet_pton (AF_INET, dst_ip, &(iphdr.ip_dst))) != 1) {
+    if (status == 0) {
+      fprintf (stderr, "inet_pton() failed for destination address.\nError message: Invalid address\n");
+    } else if (status < 0) {
+      fprintf (stderr, "inet_pton() failed for destination address.\nError message: %s\n", strerror (errno));
+    }
+    exit (EXIT_FAILURE);
+  }
+
+  // IPv4 header checksum (16 bits): Set to 0 when calculating checksum.
+  iphdr.ip_sum = 0;
+  iphdr.ip_sum = checksum ((uint8_t *) &iphdr, IP4_HDRLEN);
+
+  // ICMP header
+
+  // Message Type (8 bits): echo request
+  icmphdr.icmp_type = ICMP_ECHO;
+
+  // Message Code (8 bits): Not used for Echo Request and Echo Reply; Set to 0.
+  icmphdr.icmp_code = 0;
+
+  // Identifier (16 bits): Usually pid of sending process; Pick a number.
+  icmphdr.icmp_id = htons (1000);
+
+  // Sequence Number (16 bits): Starts at 0.
+  icmphdr.icmp_seq = htons (0);
+
+  // ICMP header checksum (16 bits): Set to 0 when calculating checksum.
+  icmphdr.icmp_cksum = 0;
+
+  // Prepare IPv4 datagram.
+
+  // First part is an IPv4 header.
+  memcpy (datagram, &iphdr, IP4_HDRLEN);
+
+  // Next part of datagram is upper layer protocol header.
+  memcpy (datagram + IP4_HDRLEN, &icmphdr, ICMP_HDRLEN);
+
+  // Finally, add the ICMP data.
+  memcpy (datagram + IP4_HDRLEN + ICMP_HDRLEN, icmpdata, icmp_datalen);
+
+  // ICMP header checksum (16 bits): Set to 0 when calculating checksum.
+  // Already set to 0 above.
+  icmphdr.icmp_cksum = icmp4_checksum (datagram + IP4_HDRLEN, ICMP_HDRLEN + icmp_datalen);
+  memcpy (datagram + IP4_HDRLEN, &icmphdr, ICMP_HDRLEN);  // Save ICMP header with checksum to datagram.
+
+  // The kernel is going to prepare layer 2 information (Ethernet frame header) for us.
+  // For that, we need to specify a destination for the kernel in order for it
+  // to decide where to send the raw datagram. We fill in a struct in_addr with
+  // the desired destination IP address, and pass this structure to the sendto() function.
+  memset (&sin, 0, sizeof (struct sockaddr_in));
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = iphdr.ip_dst.s_addr;
+
+  // Submit request for a raw socket descriptor.
+  if ((sd = socket (AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
+    status = errno;
+    fprintf (stderr, "socket() failed to get socket descriptor.\nError message: %s\n", strerror (status));
+    exit (EXIT_FAILURE);
+  }
+
+  // Set flag so socket expects us to provide IPv4 header.
+  if (setsockopt (sd, IPPROTO_IP, IP_HDRINCL, &on, sizeof (on)) < 0) {
+    status = errno;
+    fprintf (stderr, "setsockopt(IP_HDRINCL) failed.\nError message: %s\n", strerror (status));
+    exit (EXIT_FAILURE);
+  }
+
+  // Bind socket to interface name.
+  if (setsockopt (sd, SOL_SOCKET, SO_BINDTODEVICE, interface, strnlen (interface, IFNAMSIZ) + 1) < 0) {
+    status = errno;
+    fprintf (stderr, "setsockopt(SOL_SOCKET, SO_BINDTODEVICE) failed.\nError message: %s\n", strerror (status));
+    exit (EXIT_FAILURE);
+  }
+
+  // Send datagram to socket.
+  datagram_length = IP4_HDRLEN + ICMP_HDRLEN + icmp_datalen;
+  bytes = sendto (sd, datagram, datagram_length, 0, (struct sockaddr *) &sin, sizeof (struct sockaddr));
+  if (bytes == -1) {
+    status = errno;
+    fprintf (stderr, "sendto() failed.\nError message: %s\n", strerror (status));
+    exit (EXIT_FAILURE);
+  }
+  // Check for short send.
+  if (bytes != datagram_length) {
+    fprintf (stderr, "sendto() sent %zd bytes but expected to send %d bytes.\n", bytes, datagram_length);
+    exit (EXIT_FAILURE);
+  }
+
+  // Close socket descriptor.
+  close (sd);
+
+  // Free allocated memory.
+  free (datagram);
+  free (interface);
+  free (target);
+  free (src_ip);
+  free (dst_ip);
+
+  return (EXIT_SUCCESS);
+}
+
+// Computing the internet checksum (RFC 1071).
+// Note that the internet checksum is not guaranteed to preclude collisions.
+uint16_t
+checksum (uint8_t *addr, int len) {
+
+  int count = len;
+  uint32_t sum = 0;
+  uint16_t answer = 0;
+
+  // Sum up 2-byte values until none or only one byte left.
+  while (count > 1) {
+    sum += ((uint16_t) addr[0] << 8) + addr[1];
+    addr += 2;
+    count -= 2;
+  }
+
+  // Add left-over byte, if any. For an odd-length buffer, the
+  // remaining byte is the high-order byte of the final 16-bit word.
+  if (count > 0) {
+    sum += ((uint16_t) addr[0] << 8);
+  }
+
+  // Fold the accumulated sum into 16 bits by repeatedly adding
+  // carries back into the low 16 bits (one's-complement arithmetic).
+  // sum = (lower 16 bits) + (upper 16 bits shifted right 16 bits)
+  while (sum >> 16) {
+    sum = (sum & 0xffff) + (sum >> 16);
+  }
+
+  // Checksum is one's complement of sum. Return it in network byte order
+  // so it can be copied directly into the packet header.
+  answer = ~sum;
+
+  return (htons (answer));
+}
+
+// Calculate IPv4 ICMP checksum.
+// Computes the ICMPv4 checksum over an arbitrary complete ICMP message:
+//
+//   ICMP header + ICMP data
+//
+// The IPv4 ICMP checksum does not require the composition of a pseudo-header.
+// The ICMP checksum field is always bytes 2 and 3 of the ICMP message.
+// This routine makes a private copy of the message, zeros those two bytes,
+// and computes the Internet checksum over the whole ICMP message.
+//
+// This makes the function suitable for Echo, Destination Unreachable,
+// Time Exceeded, Router Advertisement, Router Solicitation, and other
+// ICMPv4 message types, provided the caller supplies the complete ICMP
+// message exactly as it will appear after the IPv4 header.
+//   icmp_msg points to the beginning of the ICMP message, not the IPv4 header.
+//   icmp_len is the total ICMP message length: ICMP header + ICMP data.
+uint16_t
+icmp4_checksum (uint8_t *icmp_msg, int icmp_len) {
+
+  uint8_t *buf;
+  uint16_t answer;
+
+  if (icmp_len < ICMP_HDRLEN) {
+    fprintf (stderr, "ERROR: icmp_len is too small to hold an ICMP header in icmp4_checksum().\n");
+    exit (EXIT_FAILURE);
+  }
+
+  if (icmp_msg == NULL) {
+    fprintf (stderr, "ERROR: icmp_msg is NULL in icmp4_checksum().\n");
+    exit (EXIT_FAILURE);
+  }
+
+  buf = allocate_ustrmem (icmp_len);
+
+  memcpy (buf, icmp_msg, icmp_len);
+
+  // ICMP checksum field is bytes 2 and 3 of the ICMP message.
+  // Set to zero for checksum calculation.
+  buf[2] = 0;
+  buf[3] = 0;
+
+  answer = checksum (buf, icmp_len);
+
+  free (buf);
+
+  return (answer);
+}
+
+// Allocate memory for an array of chars.
+char *
+allocate_strmem (int len) {
+
+  void *tmp;
+
+  if (len <= 0) {
+    fprintf (stderr, "ERROR: Cannot allocate memory because len = %d in allocate_strmem().\n", len);
+    exit (EXIT_FAILURE);
+  }
+
+  tmp = calloc (len, sizeof (char));
+  if (tmp != NULL) {
+    return (tmp);
+  } else {
+    fprintf (stderr, "ERROR: Cannot allocate memory for array allocate_strmem().\n");
+    exit (EXIT_FAILURE);
+  }
+}
+
+// Allocate memory for an array of unsigned chars.
+uint8_t *
+allocate_ustrmem (int len) {
+
+  void *tmp;
+
+  if (len <= 0) {
+    fprintf (stderr, "ERROR: Cannot allocate memory because len = %d in allocate_ustrmem().\n", len);
+    exit (EXIT_FAILURE);
+  }
+
+  tmp = calloc (len, sizeof (uint8_t));
+  if (tmp != NULL) {
+    return (tmp);
+  } else {
+    fprintf (stderr, "ERROR: Cannot allocate memory for array allocate_ustrmem().\n");
+    exit (EXIT_FAILURE);
+  }
+}

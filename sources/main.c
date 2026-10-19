@@ -28,7 +28,8 @@ main
 // DONE: envoyer selon icmp
 	IMCP_send_echo_request(sock, &dest_addr);
 // TODO: recevoir le packet
-	// ICMP_recv_echo_reply(sock);
+// recvfrom dest_addr pour filtrer le bon pkt
+	// ICMP_recv_echo_reply(sock, &dest_addr);
 // TODO: interpreter et afficher les resultats | printf
 	return (EXIT_SUCCESS);
 }
