@@ -14,4 +14,5 @@ void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr) {
 	// Send header + payload to dest_addr
 	sendto(sock, (int8*)DataGram.pkt, DataGram.sizeOfPl + sizeof(struct icmphdr),
 			0, (struct sockaddr *)dest_addr, sizeof(struct sockaddr_in));
+	free(DataGram.pkt);
 }

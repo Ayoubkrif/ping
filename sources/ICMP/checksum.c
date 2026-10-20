@@ -3,7 +3,6 @@
 int16
 ICMP_checksum
 (void *data, int len) {
-	data += sizeof(int16);
 	int32 sum = 0;
 	int16 *ptr = data;
 

@@ -30,7 +30,7 @@ void	check_flags(void);
 int		open_raw_socket(void);
 int		DNS_resolve(char *hostname, struct sockaddr_in *dest_addr);
 
-typedef struct s_icmp {
+typedef struct __attribute__((packed)) s_icmp {
 	struct icmphdr	hdr;
 	int8			pl[];
 } IcmpPacket;

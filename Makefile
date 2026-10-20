@@ -22,10 +22,11 @@ SRC_FILES = \
 			check_flags.c \
 			raw_sock.c \
 			DNS/resolve.c \
-			ICMP/mkpkt.c \
-			ICMP/checksum.c \
-			ICMP/send_echo_request.c \
-			ICMP/print.c \
+			$(addprefix ICMP/, \
+				mkpkt.c \
+				checksum.c \
+				send_echo_request.c \
+				print.c) \
 
 # Include directories listing
 INC_DIR = \
