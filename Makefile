@@ -26,6 +26,7 @@ SRC_FILES = \
 				mkpkt.c \
 				checksum.c \
 				send_echo_request.c \
+				recv_echo_reply.c \
 				print.c) \
 
 # Include directories listing

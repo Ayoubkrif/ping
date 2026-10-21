@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <errno.h>
+#include <time.h>
 
 typedef u_int8_t int8;
 typedef u_int16_t int16;
@@ -46,3 +47,5 @@ void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr);
 void	ICMP_recv_echo_reply(int sock, struct sockaddr_in *dest_addr);
 
 IcmpPacket	*ICMP_mkpkt(int8, int8, int8*, int16);
+
+extern struct timespec start, end;
