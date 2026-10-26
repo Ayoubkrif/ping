@@ -19,6 +19,6 @@ ICMP_mkpkt
 
 	// set checksum with the whole pkt set
 	// except for checksum bytes (leaved to 0)
-	pkt->hdr.checksum = ICMP_checksum(pkt, totalSize);
+	pkt->hdr.checksum = checksum(pkt, totalSize);
 	return (pkt);
 }

@@ -21,10 +21,10 @@ SRC_FILES = \
 			main.c \
 			check_flags.c \
 			raw_sock.c \
+			checksum.c \
 			DNS/resolve.c \
 			$(addprefix ICMP/, \
 				mkpkt.c \
-				checksum.c \
 				send_echo_request.c \
 				recv_echo_reply.c \
 				print.c) \

@@ -41,7 +41,7 @@ typedef struct datagram {
 	IcmpPacket		*pkt;
 } datagram;
 
-int16	ICMP_checksum(void *, int);
+int16	checksum(void *, int);
 void	ICMP_print(datagram *);
 void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr);
 void	ICMP_recv_echo_reply(int sock, struct sockaddr_in *dest_addr);

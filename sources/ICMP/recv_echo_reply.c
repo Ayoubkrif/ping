@@ -11,7 +11,6 @@
 struct timespec end;
 void
 ICMP_recv_echo_reply
-//(int sock) {
 (int sock, struct sockaddr_in *dest_addr) {
 	char buff[1460];
 	struct iphdr *ip;
@@ -36,7 +35,7 @@ ICMP_recv_echo_reply
 	int8 ipHdrLen = 4 * ip->ihl;
 
     // 2. Vérification du checksum de l'en-tête IP
-	if (ICMP_checksum(ip, ipHdrLen)) {
+	if (checksum(ip, ipHdrLen)) {
         fprintf(stderr, "Erreur : Checksum de l'en-tête IPv4 invalide (paquet corrompu).\n");
 		exit(1);
 	}
@@ -49,7 +48,7 @@ ICMP_recv_echo_reply
 	printf("packet recv:\n");
 	ICMP_print(&icmp_pkt);
     // 3. Vérification du checksum du paquet ICMP
-	if (ICMP_checksum(icmp_pkt.pkt, icmp_pkt.sizeOfPl + sizeof(struct icmphdr))) {
+	if (checksum(icmp_pkt.pkt, icmp_pkt.sizeOfPl + sizeof(struct icmphdr))) {
 		fprintf(stderr, "Erreur : Checksum ICMP invalide (données corrompues).\n");
 		exit(1);
 	}

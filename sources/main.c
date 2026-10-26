@@ -27,9 +27,10 @@ main
 
 // DONE: envoyer selon icmp
 	IMCP_send_echo_request(sock, &dest_addr);
-// TODO: recevoir le packet
+// DONE: recevoir le packet
 // recvfrom dest_addr pour filtrer le bon pkt
 	ICMP_recv_echo_reply(sock, &dest_addr);
+
 // TODO: interpreter et afficher les resultats | printf
 	double rtt_ms = (end.tv_sec - start.tv_sec) * 1000.0 +
 		(end.tv_nsec - start.tv_nsec) / 1000000.0;
