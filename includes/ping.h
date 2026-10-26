@@ -29,7 +29,9 @@ typedef u_int64_t int64;
 
 void	check_flags(void);
 int		open_raw_socket(void);
+int16	checksum(void *, int);
 int		DNS_resolve(char *hostname, struct sockaddr_in *dest_addr);
+
 
 typedef struct __attribute__((packed)) s_icmp {
 	struct icmphdr	hdr;
@@ -41,11 +43,28 @@ typedef struct datagram {
 	IcmpPacket		*pkt;
 } datagram;
 
-int16	checksum(void *, int);
 void	ICMP_print(datagram *);
 void	IMCP_send_echo_request(int sock, struct sockaddr_in *dest_addr);
 void	ICMP_recv_echo_reply(int sock, struct sockaddr_in *dest_addr);
-
 IcmpPacket	*ICMP_mkpkt(int8, int8, int8*, int16);
 
+
+typedef struct s_metrics {
+	double	avg;
+	double	stddev;
+	double	min;
+	double	max;
+	struct	{
+		double	*rtt_ms;
+		int32	size;
+	} record;
+} metrics;
+
+typedef struct s_opt {
+	int32	count;
+	int32	timeOut;
+	int32	ttl;
+} opt;
+
+extern struct opt flags;
 extern struct timespec start, end;
