@@ -1,26 +1,45 @@
 #include "ping.h"
 
-struct s_opt opt;
-
 // guideline:
-// 	remplir les options et argument
-// 		Si plusieurs arguments alors fonctionne mais dit que ca traite pas les arguments qui viennent apres
-// 		=>SCOPE 1 argument , skippe les flags pas compris
 // 	initialiser la sequence
 // 	set le signal pour arreter la sequence
 // 	lancer la sequence
 // 	imprime a chaque reception
 // 	sequence fini sur fin ou signal
+//
+//
+// guideline pour la boucle ping
+	//init timestamp next envoi de paquet = temps acutel
+	//tant que pas d'interruption et que compteur pas vide
+        // Si temp actuel - temps vers next paquet ecoule
+			// envoie le next paquet
+			// set a temps actuel + interval
+        // Attente d'un paquet ou de la fin du timer
+		// SI paquet receptionne
+			// imprime les metriques du paquet
+			// enregistre pour le recap
 
+struct s_opt g_opt = {-1, 1, 64, false};
+bool		g_stop = false;
+
+void	handle_int(int signum) {
+	(void) signum;
+	g_stop = true;
+}
+
+void	set_sig_handler(void)
+{
+	struct sigaction	sig_int;
+
+	sig_int.sa_handler = handle_int;
+	sig_int.sa_flags = 0;
+	sigemptyset(&sig_int.sa_mask);
+	sigaction(SIGINT, &sig_int, 0);
+}
 
 int
 main
 (int argc, char **argv) {
-
-	opt.count = -1;
-	opt.interval = 1;
-	opt.ttl = 64;
-	opt.verbose = false;
 //TODO: getopt et remplir les opt
 	parse_arguments(argc, argv);
 	printf("c:\t%i\nttl:\t%i\ni:\t%f\nv:\t%s\n",opt.count, opt.ttl , opt.interval , opt.verbose ? "true" : "false");
@@ -40,6 +59,8 @@ main
 	char			ip_str[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &dest_addr.sin_addr, ip_str, sizeof(ip_str));
 	printf("<%s> = <%s>\n", argv[1], ip_str);
+
+	set_sig_handler();
 
 // DONE: envoyer selon icmp
 	IMCP_send_echo_request(sock, &dest_addr);

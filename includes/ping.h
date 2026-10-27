@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <time.h>
 #include <getopt.h>
+#include <signal.h>
 
 typedef u_int8_t int8;
 typedef u_int16_t int16;
