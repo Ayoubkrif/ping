@@ -1,13 +1,29 @@
 #include "ping.h"
 
+struct s_opt opt;
+
+// guideline:
+// 	remplir les options et argument
+// 		Si plusieurs arguments alors fonctionne mais dit que ca traite pas les arguments qui viennent apres
+// 		=>SCOPE 1 argument , skippe les flags pas compris
+// 	initialiser la sequence
+// 	set le signal pour arreter la sequence
+// 	lancer la sequence
+// 	imprime a chaque reception
+// 	sequence fini sur fin ou signal
+
+
 int
 main
 (int argc, char **argv) {
-	
-	if (argc != 2) {
-	   fprintf(stderr, "Usage: %s ...\n", argv[0]);
-	   exit(EXIT_FAILURE);
-	}
+
+	opt.count = -1;
+	opt.interval = 1;
+	opt.ttl = 64;
+	opt.verbose = false;
+//TODO: getopt et remplir les opt
+	parse_arguments(argc, argv);
+	printf("c:\t%i\nttl:\t%i\ni:\t%f\nv:\t%s\n",opt.count, opt.ttl , opt.interval , opt.verbose ? "true" : "false");
 
 	// check if user can open raw sock
 	check_flags();
@@ -17,7 +33,7 @@ main
 
 	// DONE: Obtenir IP dest -> resoudre le DNS
 	struct sockaddr_in	dest_addr;
-	if (DNS_resolve(argv[1], &dest_addr) == false) {
+	if (DNS_resolve(argv[optind], &dest_addr) == false) {
 	   fprintf(stderr, "cannot solve \"%s\"\n", argv[1]);
 	   exit(EXIT_FAILURE);
 	}
@@ -27,6 +43,7 @@ main
 
 // DONE: envoyer selon icmp
 	IMCP_send_echo_request(sock, &dest_addr);
+
 // DONE: recevoir le packet
 // recvfrom dest_addr pour filtrer le bon pkt
 	ICMP_recv_echo_reply(sock, &dest_addr);

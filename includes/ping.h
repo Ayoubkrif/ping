@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <time.h>
+#include <getopt.h>
 
 typedef u_int8_t int8;
 typedef u_int16_t int16;
@@ -27,6 +28,7 @@ typedef u_int64_t int64;
 
 #define $i (int)
 
+void	parse_arguments(int argc, char **argv);
 void	check_flags(void);
 int		open_raw_socket(void);
 int16	checksum(void *, int);
@@ -49,7 +51,7 @@ void	ICMP_recv_echo_reply(int sock, struct sockaddr_in *dest_addr);
 IcmpPacket	*ICMP_mkpkt(int8, int8, int8*, int16);
 
 
-typedef struct s_metrics {
+struct s_metrics {
 	double	avg;
 	double	stddev;
 	double	min;
@@ -58,13 +60,18 @@ typedef struct s_metrics {
 		double	*rtt_ms;
 		int32	size;
 	} record;
-} metrics;
+};
 
-typedef struct s_opt {
+struct s_opt {
 	int32	count;
-	int32	timeOut;
+	double	interval;// seconds
 	int32	ttl;
-} opt;
+	bool	verbose;
+};
 
-extern struct opt flags;
+extern struct s_opt opt;
 extern struct timespec start, end;
+
+#define USAGE "Usage: ft_ping [-vV?] [-c NUMBER] [-i NUMBER] [--ttl=NUMBER] HOST...\n"
+#define HELP "HELP!\n"
+#define INFO "Try 'ft_ping --help' or 'ft_ping --usage' for more information.\n"
