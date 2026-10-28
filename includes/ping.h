@@ -12,15 +12,17 @@
 
 // std
 #include <unistd.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#include <stdio.h>
 #include <assert.h>
 #include <errno.h>
-#include <time.h>
 #include <getopt.h>
 #include <signal.h>
+
+#include <math.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
 
 typedef u_int8_t int8;
 typedef u_int16_t int16;
@@ -70,8 +72,16 @@ struct s_opt {
 	bool	verbose;
 };
 
-extern struct s_opt opt;
-extern struct timespec start, end;
+
+/// void	timespec_add_double(struct timespec *ts, double seconds);
+/// double	timediff(struct timespec begin, struct timespec end);
+/// void	timespec_add(struct timespec *result, const struct timespec *t1, const struct timespec *t2);
+/// void	ping_loop(int sock, struct sockaddr_in *dest_addr);
+
+extern struct s_opt		g_opt;
+extern struct timespec	g_start,
+	   					g_end;
+extern bool				g_stop;
 
 #define USAGE "Usage: ft_ping [-vV?] [-c NUMBER] [-i NUMBER] [--ttl=NUMBER] HOST...\n"
 #define HELP "HELP!\n"

@@ -1,6 +1,3 @@
-// // Source - https://stackoverflow.com/q/58572989
-// // Posted by newprogrammer
-// // Retrieved 2026-09-27, License - CC BY-SA 4.0
 #include "ping.h"
 // ssize_t
 // recvfrom
@@ -8,7 +5,6 @@
 // 				int flags,
 // 				struct sockaddr *_Nullable restrict src_addr, socklen_t *_Nullable restrict addrlen)
 
-struct timespec end;
 void
 ICMP_recv_echo_reply
 (int sock, struct sockaddr_in *dest_addr) {
@@ -20,7 +16,7 @@ ICMP_recv_echo_reply
 	ssize_t ipPktLen = recvfrom(sock, buff, sizeof(buff),
 		0,
 		(struct sockaddr *)dest_addr, &addr_len);
-	clock_gettime(CLOCK_MONOTONIC, &end);
+	clock_gettime(CLOCK_MONOTONIC, &g_end);
 
     // 1. Vérification d'erreur système sur recvfrom ou paquet trop court
 	if (ipPktLen < 0) {

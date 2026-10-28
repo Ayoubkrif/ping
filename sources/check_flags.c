@@ -40,16 +40,16 @@ void parse_arguments(int argc, char **argv) {
 	while ((flag = getopt_long(argc, argv, "vc:i:V?", long_options, NULL)) != -1) {
 		switch (flag) {
 			case 'v':
-				opt.verbose = 1;
+				g_opt.verbose = 1;
 				break;
 			case 'c':
-				opt.count = atoi(optarg);
+				g_opt.count = atoi(optarg);
 				break;
 			case 'i':
-				opt.interval = atof(optarg); // Support des flottants
+				g_opt.interval = atof(optarg); // Support des flottants
 				break;
 			case 'T':
-				opt.ttl = atoi(optarg);
+				g_opt.ttl = atoi(optarg);
 				break;
 			case 'V':
 				printf("ping de golmon\n");

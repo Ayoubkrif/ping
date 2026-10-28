@@ -1,26 +1,9 @@
 #include "ping.h"
 
-// guideline:
-// 	initialiser la sequence
-// 	set le signal pour arreter la sequence
-// 	lancer la sequence
-// 	imprime a chaque reception
-// 	sequence fini sur fin ou signal
-//
-//
-// guideline pour la boucle ping
-	//init timestamp next envoi de paquet = temps acutel
-	//tant que pas d'interruption et que compteur pas vide
-        // Si temp actuel - temps vers next paquet ecoule
-			// envoie le next paquet
-			// set a temps actuel + interval
-        // Attente d'un paquet ou de la fin du timer
-		// SI paquet receptionne
-			// imprime les metriques du paquet
-			// enregistre pour le recap
-
 struct s_opt g_opt = {-1, 1, 64, false};
 bool		g_stop = false;
+struct timespec g_start;
+struct timespec g_end;
 
 void	handle_int(int signum) {
 	(void) signum;
@@ -42,7 +25,7 @@ main
 (int argc, char **argv) {
 //TODO: getopt et remplir les opt
 	parse_arguments(argc, argv);
-	printf("c:\t%i\nttl:\t%i\ni:\t%f\nv:\t%s\n",opt.count, opt.ttl , opt.interval , opt.verbose ? "true" : "false");
+	printf("c:\t%i\nttl:\t%i\ni:\t%f\nv:\t%s\n",g_opt.count, g_opt.ttl , g_opt.interval , g_opt.verbose ? "true" : "false");
 
 	// check if user can open raw sock
 	check_flags();
@@ -61,6 +44,7 @@ main
 	printf("<%s> = <%s>\n", argv[1], ip_str);
 
 	set_sig_handler();
+	/// ping_loop(sock, &dest_addr);
 
 // DONE: envoyer selon icmp
 	IMCP_send_echo_request(sock, &dest_addr);
@@ -70,8 +54,8 @@ main
 	ICMP_recv_echo_reply(sock, &dest_addr);
 
 // TODO: interpreter et afficher les resultats | printf
-	double rtt_ms = (end.tv_sec - start.tv_sec) * 1000.0 +
-		(end.tv_nsec - start.tv_nsec) / 1000000.0;
+	double rtt_ms = (g_end.tv_sec - g_start.tv_sec) * 1000.0 +
+		(g_end.tv_nsec - g_start.tv_nsec) / 1000000.0;
 	printf("time=%.2f ms\n", rtt_ms);
 	return (EXIT_SUCCESS);
 }
